@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="main">
+	<select id="mainList" resultType="com.example.syFinal.guest.model.dto.MainDTO">
+		SELECT * from main AS m Left join star AS s
+		ON m.ho_idx = s.h_idx_y
+		WHERE ho_name like CONCAT('%',#{search},'%')
+	</select>
+	
+	<select id="check" resultType="Int">
+		select IFNULL((select count(w_idx) from wish 
+		WHERE w_gidx =#{g_idx} and w_hoidx = #{ho_idx}), 0)
+	</select>
+
+	<select id="mainNotice" resultType="com.example.syFinal.admin.model.dto.ANoticeDTO">
+		select @rownum:=@rownum+1 AS rownum,n.* 
+		from notice n 
+		WHERE (@rownum:=0)=0 
+		ORDER BY rownum desc
+	</select>
+	
+	<select id="mainDetail" resultType="com.example.syFinal.admin.model.dto.ANoticeDTO">
+		select * from notice 
+		where n_idx=#{nidx}
+	</select>
+</mapper>

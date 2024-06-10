@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="memo">
+
+	<select id="list"
+		resultType="com.example.syFinal.admin.model.dto.MemoDTO">
+		select *
+		FROM (
+		select @ROWNUM:=@ROWNUM+1 as rn, A.*
+		from(
+		select * from memo order by me_idx desc
+		) A, (SELECT @ROWNUM:=0) AS R
+		) AS memo
+		where rn BETWEEN #{start} and #{end}
+		<!-- SELECT * FROM memo ORDER BY me_idx DESC LIMIT #{start}, #{end} -->
+
+	</select>
+
+	<insert id="insert">
+		insert into memo (me_content)
+		values ( #{me_content})
+	</insert>
+
+	<update id="update">
+		update memo
+		set me_writer = #{me_writer},
+		me_content=#{me_content}, me_date = sysdate
+		where me_idx = #{me_idx}
+	</update>
+
+	<delete id="delete">
+		delete from memo where me_idx = #{me_idx}
+	</delete>
+
+	<select id="count" resultType="int">
+		select count(*) from memo
+	</select>
+
+</mapper>

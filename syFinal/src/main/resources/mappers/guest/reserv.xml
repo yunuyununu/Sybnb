@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="reserv">
+<select id="list" resultType="com.example.syFinal.guest.model.dto.ReservDTO">
+	select DISTINCT(o_idx), ho_name, d_ho_idx, ho_address, ho_img, o_ckin, o_ckout, h_name, h_idx, o_didx 
+	from hotel, hotel_detail, orders, host
+	where o_gidx=#{g_idx} and d_ho_idx = ho_idx and h_business = ho_business and o_state != 2 AND d_idx = o_didx
+	order by o_ckin asc
+</select>
+
+<select id="lastDetail" resultType="com.example.syFinal.guest.model.dto.ReservDTO">
+select o_ckin, o_ckout, o_orderdate, o_price, (o_benefit + o_discount) as o_discount, o_finalprice, o_adult, o_child, o_baby, o_payment, o_state, o_didx,
+h_name, h_phone, h_profile,
+ho_name, ho_address, ho_check_in, ho_check_out, ho_x, ho_y, 
+d_area, d_room_type, d_beds, d_non_smoking
+FROM orders, host, hotel, hotel_detail where
+o_idx = #{o_idx} and o_didx = d_idx and d_ho_idx = ho_idx and ho_business = h_business
+</select>
+
+<select id="reservReview" resultType="com.example.syFinal.guest.model.dto.ReservDTO">
+SELECT o_idx, ho_img, o_ckin, o_ckout, ho_name, h_name, o_didx 
+FROM orders, hotel, host, hotel_detail WHERE
+o_idx NOT IN (SELECT o_idx FROM orders, review where rv_deleted = 0 and o_idx = rv_re_idx AND rv_writer = (SELECT g_email FROM guest WHERE g_idx = #{g_idx}))
+AND o_gidx =#{g_idx} AND ho_business = h_business
+AND o_ckout <![CDATA[<]]> date_add(curdate(), interval 1 DAY) AND o_state = 4
+AND o_didx = d_idx
+AND ho_idx = d_ho_idx
+order by o_ckin desc
+</select>
+
+<select id="delDetail" resultType="com.example.syFinal.guest.model.dto.ReservDTO">
+select h_name, ho_name, ho_img, ho_check_in, ho_check_out,o_discount,
+o_ckin, o_ckout, o_adult, o_child, o_baby, o_finalprice, o_didx,paymentId
+from orders, host, hotel, hotel_detail
+where o_idx = #{o_idx} and o_didx = d_idx and d_ho_idx = ho_idx and ho_business = h_business
+</select>
+
+<update id="cancel">
+update orders set o_state = 2 where o_idx = #{o_idx}
+</update>
+
+<select id="upDetail" resultType="com.example.syFinal.guest.model.dto.ReservDTO">
+select o_ckin, o_ckout, o_adult, o_child, o_baby, d_capacity, h_name, ho_name, ho_check_in, o_ckin, o_didx, ho_idx
+from orders, hotel_detail, host, hotel
+where o_idx=#{o_idx} and o_didx = d_idx and d_ho_idx = ho_idx and ho_business = h_business
+</select>
+
+<insert id="insert">
+insert into reserv_update(ru_idx, ru_startDate, ru_endDate,ru_adult, ru_child, ru_baby) values 
+(#{ru_idx}, #{ru_startDate}, #{ru_endDate}, #{ru_adult}, #{ru_child}, #{ru_baby})
+</insert>
+
+<select id="check" resultType="int">
+select IFNULL((select ru_state from reserv_update 
+WHERE ru_idx = #{ru_idx}), 3)
+</select>
+
+<update id="update">
+update reserv_update set ru_startDate = #{ru_startDate}, ru_endDate = #{ru_endDate}, ru_adult = #{ru_adult}, 
+ru_child = #{ru_child}, ru_baby = #{ru_baby}
+where ru_idx = #{ru_idx}
+</update>
+
+<update id="state">
+update orders set o_state = 1 where o_idx =#{ru_idx}
+</update>
+
+<select id="confirm" resultType="com.example.syFinal.guest.model.dto.ReservDTO">
+	select * from reserv_update where ru_idx = #{ru_idx} and ru_state = 1
+</select>
+
+<update id="down_pro" statementType="CALLABLE">
+{ call level_down(#{g_idx}) }
+</update>
+
+<select id="imp_date" resultType="com.example.syFinal.guest.model.dto.ReservDTO">
+SELECT distinct(o_idx), o_ckin, o_ckout from orders, hotel, hotel_detail
+where ho_idx = #{ho_idx} and d_ho_idx = ho_idx and o_didx = #{o_didx}
+and o_idx <![CDATA[<>]]> #{o_idx}
+</select>
+
+<select id="roomCount" resultType="Int">
+	SELECT 
+	case
+	when ((SELECT d_room_type FROM hotel_detail, orders
+	WHERE o_idx = #{o_idx} and o_didx = d_idx) = '더블룸' )
+	then (SELECT ho_double FROM hotel_detail, orders, hotel
+	WHERE o_idx = #{o_idx} and o_didx = d_idx AND d_ho_idx = ho_idx)
+	
+	when ((SELECT d_room_type FROM hotel_detail, orders
+	WHERE o_idx = #{o_idx} and o_didx = d_idx) = '싱글룸' )
+	then (SELECT ho_double FROM hotel_detail, orders, hotel
+	WHERE o_idx = #{o_idx} and o_didx = d_idx AND d_ho_idx = ho_idx)
+	
+	when ((SELECT d_room_type FROM hotel_detail, orders
+	WHERE o_idx = #{o_idx} and o_didx = d_idx) = '패밀리룸' )
+	then (SELECT ho_double FROM hotel_detail, orders, hotel
+	WHERE o_idx = #{o_idx} and o_didx = d_idx AND d_ho_idx = ho_idx)
+	
+	when ((SELECT d_room_type FROM hotel_detail, orders
+	WHERE o_idx = #{o_idx} and o_didx = d_idx) = '스위트룸' )
+	then (SELECT ho_double FROM hotel_detail, orders, hotel
+	WHERE o_idx = #{o_idx} and o_didx = d_idx AND d_ho_idx = ho_idx)
+	END AS count
+</select>
+
+<update id='gPoint'>
+	update guest 
+	set g_point = #{pointPlus}
+	where g_idx = #{g_idx}
+</update>
+
+</mapper>

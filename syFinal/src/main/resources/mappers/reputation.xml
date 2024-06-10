@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="reputation">
+<select id="getHotelReviews" resultType="java.util.Map">
+SELECT @rownum:=@rownum+1 AS rownum, rv_idx, g_name, g_photo, l_name, g_email, rv_content, rv_date, rv_star, rp_idx
+from v_hotel_review, (SELECT @rownum:=0) tmp
+where ho_idx=#{ho_idx}
+order by rv_idx desc 
+</select>
+
+<select id="getReply" resultType="java.util.Map">
+select * from v_host_reply where rp_idx = #{rp_idx}
+</select>
+
+<select id="calcAvgRate" resultType="float">
+select avg(rv_star) from v_hotel_review where ho_idx = #{ho_idx}
+</select>
+
+<select id="getAvgRate" resultType="java.util.Map">
+SELECT * FROM v_rate where h_idx=#{h_idx}
+</select>
+
+<select id="getAllReviews" resultType="java.util.Map">
+select A.*
+from (
+	select @rownum:=@rownum+1 as rownum, v.* 
+	from v_hotel_review v, (select @rownum:=0) tmp
+	where h_idx=#{h_idx}
+	order by rv_idx desc, @rownum desc) A
+limit #{start}, 10
+</select>
+
+<select id="countRecord" resultType="int">
+select count(*) from v_hotel_review where h_idx=#{h_idx}
+</select>
+
+<select id="reviewSearch" resultType="java.util.Map">
+select rv_idx, g_name, g_photo, l_name, g_email, rv_content, rv_date, rv_star, rp_idx
+from v_hotel_review
+where 
+	ho_idx=#{ho_idx}
+	and rv_content like concat('%', #{keyword}, '%')
+  <choose>
+	<when test="sort == 'highest'">
+		order by rv_star desc, rv_idx desc
+	</when>
+	<when test="sort == 'lowest'">
+		order by rv_star, rv_idx desc
+	</when>
+	<otherwise>
+		order by rv_idx desc
+	</otherwise>
+  </choose>
+</select>
+
+<select id="reviewDetail" resultType="java.util.Map">
+select v.*, o_ckin, o_ckout
+from v_hotel_review v, orders o
+where v.o_idx = o.o_idx
+	and rv_idx = #{rv_idx}
+</select>
+
+<select id="avgStarList" resultType="java.util.Map">
+select ho.ho_name, ifnull(round(v.avg,2), '-') avg, ho.ho_idx
+from v_rate v right join hotel ho
+on v.ho_idx = ho.ho_idx
+where ho_h_idx = #{h_idx}
+</select>
+</mapper>

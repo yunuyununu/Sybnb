@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="message">
+
+<select id="g_list" resultType="com.example.syFinal.global.model.MessageDTO">
+	SELECT m_receiver, h_name, h_profile, m_sender, m_roomId, MAX(m_idx) idx 
+	FROM host, message
+	WHERE (m_sender=#{sender} AND m_receiver = h_email) 
+	OR (m_sender=h_email AND m_receiver = #{sender}) AND m_test=0
+	GROUP BY h_name
+	ORDER BY idx desc
+</select>
+
+
+<select id="last_message" resultType="com.example.syFinal.global.model.MessageDTO">
+select m_message, m_send_date from message where m_roomId = #{m_roomId}
+order by m_idx desc limit 1
+</select>
+
+<select id="h_list" resultType="com.example.syFinal.global.model.MessageDTO">
+	SELECT m_receiver, g_name, g_photo, m_sender, m_roomId, MAX(m_idx) idx 
+	FROM guest, message
+	WHERE 
+	m_sender=g_email AND m_receiver = #{sender} AND m_test=0
+	GROUP BY g_name
+	ORDER BY idx desc
+
+</select>
+
+<select id="check" resultType="String">
+select IFNULL((select distinct(m_roomId) from message
+WHERE (m_sender=#{g_email} AND m_receiver=#{h_email}) OR (m_sender=#{h_email} AND m_receiver=#{g_email})), 'none')
+</select>
+
+<insert id="create">
+insert into message(m_roomId, m_sender, m_receiver, m_test) values
+(#{room}, #{g_email}, #{h_email}, 1)
+</insert>
+
+
+<select id="entrance" resultType="com.example.syFinal.global.model.MessageDTO">
+select distinct(m_idx), m_roomId, m_sender, m_receiver, m_message, m_send_date,
+g_name, g_photo, h_name, h_profile, m_test
+from message, guest, host
+where m_roomId=#{m_roomId} AND ((m_sender=g_email and m_receiver=h_email) OR (m_sender=h_email and m_receiver=g_email))
+
+</select>
+
+
+<select id="receive" resultType="String">
+select IFNULL((select DISTINCT(m_receiver) from message 
+WHERE m_sender = #{m_sender} and m_roomId = #{m_roomId}), 
+(select DISTINCT(m_sender) from message 
+WHERE m_receiver = #{m_sender} and m_roomId = #{m_roomId}));
+</select>
+
+<!-- 메시지 보냈을 때 -->
+<select id="insert">
+insert into message(m_roomId, m_sender, m_receiver, m_message)
+values (#{m_roomId}, #{m_sender}, #{m_receiver}, #{m_message})
+</select>
+
+
+</mapper>

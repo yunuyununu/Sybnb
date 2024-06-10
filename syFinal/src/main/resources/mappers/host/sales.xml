@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sales">
+<select id="lastMonth" resultType="java.util.Map">
+select this.*
+from (
+	select date_format(o_ckin, '%Y-%m') AS month, sum(ifnull(o_finalprice*0.8,0))/1000000 sales, ho.ho_name, ho.ho_idx
+	from v_host_order v right join hotel ho
+	on 
+		o_state=4
+		and o_ckin between date_format(now()-interval 1 month, '%Y-%m-01') and last_day(now()-interval 1 month)
+		and v.ho_idx=ho.ho_idx
+	group by month, ho_name
+	order by ho.ho_idx
+	) this
+where ho_idx in (select ho_idx from hotel where ho_h_idx = #{h_idx})
+</select>
+
+<select id="thisMonth" resultType="java.util.Map">
+select this.*
+from (
+	select date_format(o_ckin, '%Y-%m') AS month, sum(ifnull(o_finalprice*0.8,0))/1000000 sales, ho.ho_name, ho.ho_idx
+	from v_host_order v right join hotel ho
+	on 
+		o_state=4
+		and o_ckin between date_format(now(), '%Y-%m-01') and last_day(now())
+		and v.ho_idx=ho.ho_idx
+	group by month, ho_name
+	order by ho.ho_idx
+	) this
+where ho_idx in (select ho_idx from hotel where ho_h_idx = #{h_idx})
+</select>
+
+<select id="getHotelList"  resultType="java.util.Map">
+select ho_name from hotel where ho_h_idx = #{h_idx} order by ho_idx
+</select>
+</mapper>

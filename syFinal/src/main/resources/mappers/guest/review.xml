@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="review">
+	<insert id="insert">
+		insert into review (rv_writer, rv_content, rv_re_idx, rv_star, rv_hd_idx)
+		values (
+		#{rv_writer}, #{rv_content}, #{o_idx}, #{rv_star},
+		(select o_didx from orders where o_idx=#{o_idx})
+		)
+	</insert>
+
+	<update id="editReview">
+		update review
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="rv_content != '' or rv_content != null">rv_content = #{rv_content},</if>
+			<if test="rv_star != '' or rv_star != null">rv_star = #{rv_star},</if>
+		</trim>
+		where rv_idx=#{rv_idx}
+	</update>
+
+	<update id="updateDeleted">
+		update review
+		set rv_deleted=1
+		where rv_idx=#{rv_idx}
+	</update>
+</mapper>

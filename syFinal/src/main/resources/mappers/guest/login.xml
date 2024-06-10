@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="login">
+<select id="chkPw" resultType="String">
+	select IFNULL((SELECT g_passwd from guest where g_email = #{g_email}), 'no');
+</select>
+
+<select id="login" resultType="map">
+	select g_idx, g_name, g_level, g_phone, g_profile, g_photo from GUEST where g_email = #{g_email} and g_passwd = #{g_passwd}
+</select>
+
+<select id="searchEmail" resultType="String">
+	select IFNULL((SELECT g_email from guest where g_name = #{g_name} and g_phone = #{g_phone}), 'no')
+</select>
+
+<select id="searchPw" resultType="int">
+	select IFNULL((SELECT count(g_passwd) from guest where g_email = #{g_email} and g_name = #{g_name} and g_phone = #{g_phone}), 0)
+</select>
+
+<update id="randomPw">
+	update guest set g_passwd = #{randomPw} where g_email = #{g_email}
+</update>
+</mapper>

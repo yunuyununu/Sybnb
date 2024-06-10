@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="wish">
+<select id="wishlist" resultType="com.example.syFinal.guest.model.dto.MainDTO">
+	select w_idx, ho_idx, ho_name, ho_img, min(d_idx) d_idx
+	from hotel, wish, hotel_detail
+	where w_gidx = #{g_idx} and w_hoidx = ho_idx and ho_idx = d_ho_idx
+	group by w_idx
+	order by w_idx desc
+</select>
+
+<select id="recentItem" resultType="com.example.syFinal.guest.model.dto.MainDTO">
+select ho_idx, ho_name, ho_img, d_idx
+from hotel, hotel_detail
+where ho_idx = #{recentIdx} and ho_idx = d_ho_idx 
+LIMIT 1
+</select>
+
+<select id="sel_didx" resultType="Int">
+SELECT d_idx FROM hotel_detail, hotel 
+WHERE d_ho_idx = ho_idx AND ho_idx = #{ho_idx} LIMIT 1
+</select>
+
+<select id="firstRecent" resultType="String">
+	select ho_img from hotel where ho_idx = #{idx}
+</select>
+
+<select id="countWish" resultType="Int">	
+	select IFNULL((select count(ho_img) from hotel, wish 
+	WHERE w_gidx =#{g_idx} and w_hoidx = ho_idx order by w_idx DESC), 0)
+</select>
+
+<select id="firstWish" resultType="com.example.syFinal.guest.model.dto.MainDTO">	
+	select ho_img from hotel, wish 
+	where w_gidx = #{g_idx} and w_hoidx = ho_idx order by w_idx DESC
+</select>
+
+<delete id="delete">
+delete from wish where w_idx = #{w_idx}
+</delete>
+
+<select id="recentCheck" resultType="Int">
+	select IFNULL((select count(w_idx) from wish 
+	WHERE w_gidx =#{g_idx} and w_hoidx = #{recentIdx}), 0)
+</select>
+
+<delete id="wishDelete">
+	delete from wish where w_gidx = #{g_idx} and w_hoidx = #{h_idx}
+</delete>
+
+<update id="wishUpdate">
+	insert into wish (w_gidx, w_hoidx) values (#{g_idx}, #{h_idx})
+</update>
+</mapper>

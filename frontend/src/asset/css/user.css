@@ -1,0 +1,315 @@
+.container {
+	margin-top: 50px;
+}
+
+.card-style { 
+	background: #fff;
+	box-sizing: border-box;
+	padding: 25px 30px;
+	position: relative;
+	box-shadow: 0px 12px 24px -4px rgba(145, 158, 171, 0.12), 0px 0px 2px
+		0px rgba(145, 158, 171, 0.2);
+	border-radius: 7px;
+}
+
+.dropdown-basic {
+	background: transparent;
+	border-color: transparent;
+	color: black;
+	font-weight: 600;
+	width: 200px;
+}
+
+.btnLoginBottom:hover {
+	cursor: pointer;
+}
+
+.btnLoginBottom>a {
+	text-decoration-line: none;
+	color: black;
+	font-weight: 600;
+}
+
+ul.tabs {
+	margin: 0px;
+	padding: 0px;
+	list-style: none;
+}
+
+ul.tabs li {
+	background: none;
+	color: #222;
+	display: inline-block;
+	padding: 10px 15px;
+	cursor: pointer;
+}
+
+ul.tabs li.current {
+	background: #f1d59838;
+	color: #222;
+	font-weight: bolder;
+}
+
+.input-style-tab {
+	position: relative;
+	margin-bottom: 30px;
+	padding-top: 30px;
+	display: none;
+	border-top: 3px solid #f1d59838;
+}
+
+.input-style-tab.current {
+	display: inherit;
+}
+
+.input-style-1, .input-style-2 {
+	position: relative;
+	margin-bottom: 30px;
+}
+
+.input-style-1 label, .input-style-2 label, .input-style-tab label {
+	font-size: 16px;
+	font-weight: 500;
+	color: #1A2142;
+	display: block;
+	margin-bottom: 5px;
+}
+
+.input-style-1 input, .input-style-tab input {
+	width: 100%;
+	background: white;
+	border: 1px solid #e5e5e5;
+	border-radius: 4px;
+	padding: 5px;
+	color: #5d657b;
+	resize: none;
+	transition: all 0.3s;
+}
+
+.input-style-2 input {
+	width: 100%;
+	background: rgba(239, 239, 239, 0.5);
+	pointer-events: none;
+	border: 1px solid #e5e5e5;
+	border-radius: 4px;
+	padding: 5px;
+	color: #5d657b;
+	resize: none;
+	transition: all 0.3s;
+}
+
+/* ========== table css ========== */
+.tbl {
+	width: 100%;
+	border: 1px solid #F7EFFC;
+	margin-top: 15px;
+	margin-bottom: 20px;
+	margin-top: 15px;
+}
+
+.tbl th {
+	padding: 10px;
+	border: 1px solid #dee2e6;
+	background-color: #F7EFFC;
+	text-align: center;
+	font-weight: bold;
+}
+
+.tbl td {
+	padding: 10px;
+	border: 1px solid #dee2e6;
+	background-color: #ffffff;
+}
+
+.profile-image {
+	max-width: 100px;
+	width: 100px;
+	height: 100px;
+	border-radius: 50%;
+	margin-right: 20px;
+	position: relative;
+	z-index: 1;
+	height: 100px;
+}
+
+.profile-image span {
+	width: 100%;
+		/* border-radius: 50%; */
+}
+
+/* 문장 3줄 이상일 때 */
+.hidden-text-target {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+  }
+
+/* ========== Buttons css ========== */
+.main-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	padding: 15px 45px;
+	font-weight: 600;
+	font-size: 16px;
+	line-height: 24px;
+	border-radius: 30px;
+	cursor: pointer;
+	z-index: 5;
+	transition: all 0.4s ease-in-out;
+	border: 1px solid transparent;
+	overflow: hidden;
+	background: #DBC4F0;
+	color: #000;
+	position: relative;
+	overflow: hidden;
+}
+
+.circle-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-right : 10px;
+	margin-left: 10px;
+	border-radius: 50%;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	padding: 2px 12px;
+	font-weight: 600;
+	font-size: 16px;
+	cursor: pointer;
+	z-index: 5;
+	transition: all 0.4s ease-in-out;
+	border: 1px solid transparent;
+	overflow: hidden;
+	background: #DBC4F0;
+	color: #666666;
+	position: relative;
+	overflow: hidden;
+}
+
+button[disabled]{
+	background-color: #cccccc;
+	color: #666666;
+  }
+
+/* ============= typography css ============= */
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+	color: #1A2142;
+	margin: 0;
+}
+
+h1, .h1 {
+	font-size: 32px;
+	font-weight: 700;
+}
+
+h2, .h2 {
+	font-size: 28px;
+	font-weight: 600;
+}
+
+h3, .h3 {
+	font-size: 24px;
+	font-weight: 600;
+}
+
+h4, .h4 {
+	font-size: 20px;
+	font-weight: 600;
+}
+
+h5, .h5 {
+	font-size: 16px;
+	font-weight: 700;
+}
+
+h6, .h6 {
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.text-bold {
+	font-weight: 700;
+}
+
+.text-semi-bold {
+	font-weight: 600;
+}
+
+.text-medium {
+	font-weight: 500;
+}
+
+.text-regular {
+	font-weight: 400;
+}
+
+.text-light {
+	font-weight: 300;
+}
+
+.text-sm {
+	font-size: 15px;
+	line-height: 22px;
+}
+
+.text-xs {
+	font-size: 12px;
+}
+
+/* ============= margin css ============= */
+.mb-10{
+	margin-bottom: 10px;
+}
+
+.mb-20{
+	margin-bottom: 20px;
+}
+
+.mb-30{
+	margin-bottom: 30px;
+}
+
+.mb-40{
+	margin-bottom: 40px;
+}
+
+.mb-50{
+	margin-bottom: 50px;
+}
+
+.mt-10{
+	margin-top: 10px;
+}
+
+.mt-20{
+	margin-top: 20px;
+}
+
+.mt-30{
+	margin-top: 30px;
+}
+
+.mt-40{
+	margin-top: 40px;
+}
+
+.mt-50{
+	margin-top: 50px;
+}

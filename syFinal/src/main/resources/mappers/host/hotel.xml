@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="hotel">
+
+	<!-- 호텔 상세 정보 -->
+	<select id="getHotelList" resultType="java.util.HashMap">
+		SELECT *
+			FROM hotel h, hotel_detail d, host
+				WHERE ho_idx = #{ho_idx}
+				AND h.ho_idx = d.d_ho_idx
+				AND h.ho_business = host.h_business
+				AND d_idx = #{d_idx}
+	</select>
+		
+	<!-- 이미 예약된 날짜 정보 -->
+	<select id="imp_date" resultType="com.example.syFinal.host.model.dto.HotelDetailDTO">
+		SELECT distinct(o_idx), o_ckin, o_ckout from orders, hotel, hotel_detail
+		where ho_idx = #{ho_idx} and d_ho_idx = ho_idx and o_didx = #{d_idx} AND o_state IN (1, 3)
+	</select>
+	
+	<!-- 객실 수 계산 -->
+	<select id="roomCount" resultType="Int">
+		SELECT 
+		case
+		when ((SELECT d_room_type FROM hotel_detail
+		WHERE d_idx = #{d_idx} and d_ho_idx = #{ho_idx}) = '더블룸' )
+		then (SELECT ho_double FROM hotel WHERE ho_idx = #{ho_idx})
+		
+		when ((SELECT d_room_type FROM hotel_detail
+		WHERE d_idx = #{d_idx} and d_ho_idx = #{ho_idx}) = '싱글룸' )
+		then (SELECT ho_single FROM hotel WHERE ho_idx = #{ho_idx})
+		
+		when ((SELECT d_room_type FROM hotel_detail
+		WHERE d_idx = #{d_idx} and d_ho_idx = #{ho_idx}) = '패밀리룸' )
+		then (SELECT ho_family FROM hotel WHERE ho_idx = #{ho_idx})
+		
+		when ((SELECT d_room_type FROM hotel_detail
+		WHERE d_idx = #{d_idx} and d_ho_idx = #{ho_idx}) = '스위트룸' )
+		then (SELECT ho_suite FROM hotel WHERE ho_idx = #{ho_idx})
+		END AS count
+	</select>
+
+	<!-- 호텔 객실 정보 -->
+	<select id="getHotelRooms"
+		resultType="com.example.syFinal.host.model.dto.HotelDetailDTO">
+		SELECT *
+		FROM hotel_detail
+		WHERE d_ho_idx= #{ho_idx}
+		ORDER BY FIELD(`d_room_type`, '싱글룸', '더블룸', '패밀리룸', '스위트룸')
+	</select>
+
+	<!--호텔 사진 모두 보기 -->
+	<select id="viewHotelImg" resultType="java.util.HashMap">
+		SELECT d_room_type, ho_img, d_img1, d_img2, d_img3
+		FROM hotel, hotel_detail
+		WHERE ho_idx = d_ho_idx
+		AND ho_idx = #{ho_idx}
+		ORDER BY FIELD(`d_room_type`, '싱글룸', '더블룸', '패밀리룸', '스위트룸')
+	</select>
+	
+	<!-- 호텔 편의시설 -->
+	<select id="getHotelAmenity"
+		resultType="java.util.HashMap">
+		SELECT ha_idx, ha_ho_idx, mountain_view, ocean_view, wifi, parking_lot, breakfast, fire_alam, fire_extinguisher
+		FROM hotel_amenity a, hotel h
+		WHERE ha_ho_idx = ho_idx
+		AND ho_idx = #{ho_idx}
+	</select>
+
+	<!-- 호텔 호스트 정보 -->
+	<select id="getHostInfo" resultType="java.util.HashMap">
+		SELECT h_idx, h_name, h_phone, h_email,
+		h_business, h_level, h_regdate, h_profile, h_description
+		FROM host h,
+		hotel ho
+		WHERE ho.ho_idx = #{ho_idx}
+		AND ho.ho_business = h.h_business
+	</select>
+
+	<!-- 호텔 이용규칙 -->
+	<select id="getHotelRule" resultType="java.util.HashMap">
+		SELECT ho_level, ho_floor,
+		ho_single, ho_double, ho_family, ho_suite , ho_check_in, ho_check_out
+		FROM hotel
+		WHERE ho_idx = #{ho_idx}
+	</select>
+	
+	<!-- 호텔 예약(1박 가격) -->
+	<select id="getPrice" resultType="java.util.HashMap">
+		SELECT d_idx, d_capacity, d_price FROM hotel_detail
+		WHERE d_ho_idx = #{ho_idx}
+		AND d_idx = 1 <!-- 추후 조건 기능 추가 -->
+	</select>
+	
+	<!-- 호스트 상세페이지(게스트용) -->
+	<select id="getHostPage" resultType="java.util.HashMap">
+		SELECT  h.*, COUNT(*) AS review_cnt, ROUND(AVG(rv_star), 1) AS star
+		FROM host h, v_hotel_review v
+		WHERE h.h_idx = #{h_idx}
+		AND h.h_idx = v.h_idx
+	</select>
+	
+	<!-- 호스트의 호텔 리스트 -->
+	<select id="getHotelSummary" resultType="java.util.Map">
+		SELECT ho_idx, ho_name, ho_address, ho_img, d.d_idx
+		FROM hotel, (SELECT d_idx, d_ho_idx
+							FROM hotel_detail
+							WHERE d_ho_idx IN (SELECT ho_idx FROM hotel WHERE ho_h_idx = #{h_idx}) GROUP BY d_ho_idx) AS d
+		WHERE ho_h_idx = #{h_idx}
+		AND ho_idx  = d.d_ho_idx
+	</select>
+	
+	<!-- 호스트의 모든 호텔 리뷰 -->
+	<select id="getAllReviews" resultType="java.util.Map">
+		SELECT rv_idx, g_name, g_photo, rv_content, rv_date, rv_star,
+		(SELECT rv_idx FROM v_hotel_review where rv_idx &lt; r.rv_idx ORDER BY rv_idx  LIMIT 1) prev_idx,
+		(SELECT rv_idx FROM v_hotel_review where rv_idx  &gt; r.rv_idx ORDER BY rv_idx  LIMIT 1) next_idx
+		FROM v_hotel_review r
+		WHERE ho_idx IN
+							(SELECT ho_idx FROM hotel
+							WHERE ho_h_idx = #{h_idx})
+	</select>
+	
+	<!-- 호스트의 호텔 현황 -->
+	<select id="getHotelStatus" resultType="java.util.HashMap">
+		SELECT
+		(SELECT COUNT(*) FROM hotel WHERE ho_h_idx = #{h_idx} AND ho_status = 1) wait, 
+		(SELECT COUNT(*) FROM hotel WHERE ho_h_idx = #{h_idx} AND ho_status = 2) open, 
+		(SELECT COUNT(*) FROM hotel WHERE ho_h_idx = #{h_idx} AND ho_status = 3) close
+		FROM hotel
+		LIMIT 1
+	</select>
+	
+	<!-- 호스트의 호텔 목록 -->
+	<select id="getHostAllHotel" resultType="java.util.HashMap">
+		SELECT *, 
+			CASE
+				WHEN ho_status= 1 THEN '승인 대기'
+			    WHEN ho_status= 2 THEN '영업 중'
+			    ELSE '영업 중지'
+			 END AS status
+		FROM hotel
+		WHERE ho_h_idx = #{h_idx}
+	</select>
+	
+	<!-- 호텔 상세 정보 조회 -->
+	<select id="getDetailMyHotel" resultType="java.util.HashMap">
+		SELECT * 
+		FROM hotel, hotel_detail, hotel_amenity
+		WHERE ho_idx = #{ho_idx}
+		AND ho_idx = d_ho_idx
+		AND d_ho_idx = ha_ho_idx
+	</select>
+
+	<!-- 호텔 대표 이미지 조회 -->
+	<select id="getHotelImg" resultType="java.util.Map">
+		SELECT ho_img, d_img1, d_img2, d_img3
+		FROM hotel, hotel_detail
+		WHERE ho_idx = #{ho_idx}
+		GROUP BY ho_idx
+	</select>
+	
+	<!-- 호텔 객실 이미지 조회 -->
+	<select id="getHotelDetailImg" resultType="java.util.Map">
+		SELECT ho_img, d_img1, d_img2, d_img3
+		FROM hotel, hotel_detail
+		WHERE ho_idx = #{ho_idx}
+		AND d_idx = #{d_idx}
+	</select>
+
+	<!-- 신규 호텔 등록 -->
+	<insert id="registHotelTemp">
+		INSERT INTO hotel_temp (
+								ht_name,
+								ht_address,
+								ht_level,
+								ht_floor,
+								ht_business,
+								ht_img,
+								ht_single,
+								ht_double,
+								ht_family,
+								ht_suite,
+								ht_x,
+								ht_y,
+								ht_description,
+								ht_check_in,
+								ht_check_out,
+								ht_h_idx
+							)
+					VALUES 
+						(
+							#{ht_name}, 
+							#{ht_address},
+							#{ht_level}, 
+							#{ht_floor}, 
+							(SELECT h_business FROM host WHERE h_idx = #{ht_h_idx}), 
+							#{ht_img},
+							#{ht_single}, 
+							#{ht_double}, 
+							#{ht_family}, 
+							#{ht_suite},
+							#{ht_x}, 
+							#{ht_y}, 
+							#{ht_description},
+							#{ht_check_in}, 
+							#{ht_check_out}, 
+							#{ht_h_idx}
+						)
+	</insert>
+
+	<!-- 신규 호텔 업데이트 -->
+	<update id="updateHotelTemp">
+		UPDATE hotel_temp 
+		SET ht_name = #{ht_name},
+			   ht_address = #{ht_address},
+			   ht_level = #{ht_level},
+			   ht_floor= #{ht_floor} ,
+			   ht_img = #{ht_img},
+			   ht_single = #{ht_single},
+			   ht_double = #{ht_double},
+			   ht_family = #{ht_family},
+			   ht_suite = #{ht_suite},
+			   ht_x = #{ht_x},
+			   ht_y = #{ht_y},
+			   ht_description = #{ht_description},
+			   ht_check_in = #{ht_check_in},
+			   ht_check_out = #{ht_check_out}
+		WHERE ht_h_idx = #{ht_h_idx}
+		AND ht_status = 1
+ 	</update>
+
+	<!-- 임시 테이블에 등록한 호텔 번호 전달 -->
+	<select id="findHtHidx" resultType="int">
+		SELECT ht_idx FROM hotel_temp WHERE ht_h_idx = #{ht_h_idx} AND ht_status != 2
+	</select>
+
+	<!-- 호텔 신규 등록 전 확인 -->
+	<select id="beforeRegistCheck" resultType="int">
+		SELECT COUNT(*) FROM hotel_temp 
+		WHERE ht_h_idx = #{userIdx} 
+		AND ht_status = 1
+	</select>
+	
+	<!-- 이어서 작성하기 -->
+	<select id="selectTempHotel" resultType="java.util.HashMap">
+		SELECT * FROM hotel_temp 
+		WHERE ht_h_idx = #{userIdx}
+		AND ht_status = 1
+	</select>
+	
+	<!-- 임시 데이터 삭제 -->
+	<delete id="deleteTempHotel">
+		DELETE FROM hotel_temp
+		WHERE ht_h_idx = #{userIdx}
+		AND ht_status = 1
+	</delete>
+
+	<!-- 신규 호텔 편의 시설 등록 -->
+	<insert id="insertNewAmenity">
+		INSERT INTO hotel_amenity(ha_ho_idx) VALUES (#{ht_idx})
+	</insert>
+
+	<!-- 신규 호텔 객실 등록 -->
+	<insert id="insertNewRoom">
+		INSERT INTO hotel_detail(d_ho_idx, d_room_type, d_capacity, d_area, d_beds, d_non_smoking, d_price, d_img1, d_img2, d_img3)
+		VALUES( #{ht_idx}, #{roomType}, #{capacity}, #{area}, #{beds}, #{non_smoking},
+		 #{price}, #{d_img1}, #{d_img2}, #{d_img3} )
+	</insert>
+
+	<!-- 신규 호텔 최종 등록 -->
+	<insert id="insertNewHotel">
+		INSERT INTO hotel
+		SELECT * FROM hotel_temp WHERE ht_idx = #{ho_idx}
+	</insert>
+
+	<!-- 임시 테이블 등록된 호텔 상태 변경 -->
+	<update id="changeStatus">
+		UPDATE hotel SET ho_status = 1 WHERE ho_idx = #{ho_idx}
+	</update>
+
+	<!-- 임시 테이블 등록된 호텔 상태 변경 -->
+	<update id="updateTempHotel">
+		UPDATE hotel_temp 
+		SET ht_idx = (SELECT MAX(ho_idx)+1 FROM hotel), ht_status = 2
+		WHERE ht_idx = #{ht_idx}
+		AND ht_h_idx = #{ht_h_idx}
+	</update>
+	
+	<!-- 호텔 테이블 번호 라벨링 -->
+	<select id="getHotelIdx" resultType="int">
+		SELECT MAX(ht_idx) FROM hotel_temp
+		WHERE ht_h_idx = #{ht_h_idx}
+	</select>
+
+	<!-- 호텔 기본 정보 수정 -->
+	<update id="editHotelDefaultInfo">
+		UPDATE hotel 
+		SET ho_name = #{ho_name}, ho_address = #{ho_address}, ho_level = #{ho_level}, ho_floor = #{ho_floor}, ho_single = #{ho_single}, ho_double = #{ho_double},
+		ho_family = #{ho_family}, ho_suite = #{ho_suite}, ho_img = #{ho_img}, ho_description = #{ho_description}, 
+		ho_check_in = #{ho_check_in}, ho_check_out = #{ho_check_out}, ho_x = #{ho_x}, ho_y = #{ho_y}
+		WHERE ho_idx = #{ho_idx}
+	</update>
+	
+	<!-- 호텔 객실 정보 초기화 -->
+	<update id="initHotelAmenity">
+		UPDATE hotel_amenity 
+		SET mountain_view = 'N', ocean_view = 'N', wifi = 'N', parking_lot = 'N', 
+ 		breakfast = 'N', fire_alam = 'N', fire_extinguisher = 'N'
+		WHERE ha_ho_idx=#{ho_idx}
+	</update>
+
+	<!-- 호텔 편의시설 수정 -->
+	<update id="editHotelAmenity">
+		UPDATE hotel_amenity SET ${option} = "Y"
+		WHERE ha_ho_idx=#{ho_idx}
+	</update>
+	
+	<!-- 호텔 객실 정보 수정 -->
+	<update id="editHotelRoomInfo">
+		UPDATE hotel_detail 
+		SET d_capacity = #{d_capacity}, d_area = #{d_area}, d_beds = #{d_beds}, 
+			  d_non_smoking = #{d_non_smoking}, d_price = #{d_price},
+			  d_img1 = #{d_img1}, d_img2 = #{d_img2}, d_img3 = #{d_img3}
+		WHERE d_idx = #{d_idx}
+	</update>
+	
+	<!-- 호텔 객실 정보 삭제2 -->
+	<select id="getDeleteRoomInfo" resultType="String">
+		SELECT d_room_type FROM hotel_detail
+		WHERE d_ho_idx = #{ho_idx}
+		AND d_idx = #{d_idx}
+	</select>
+	
+	<!-- 호텔 객실 정보 삭제2 -->
+	<delete id="deleteRoomInfo">
+		DELETE FROM hotel_detail
+		WHERE d_ho_idx = #{ho_idx}
+		AND d_idx = #{d_idx}	
+	</delete>
+	
+	<!-- 호텔 객실 정보 삭제3 -->
+	<update id="updateRoomCount">
+		UPDATE hotel
+		SET ${roomType} = 0
+		WHERE ho_idx = #{ho_idx}
+	</update>
+	
+	<!-- 호텔 상태 변경 신청 -->
+	<update id="updateHotelStatus">
+		UPDATE hotel h, hotel_detail d, hotel_amenity a
+		SET h.ho_status = #{status}, d.d_status = #{status}, a.ha_status = #{status}
+		WHERE ho_idx = #{ho_idx}
+		AND ho_idx = d_ho_idx
+		AND d_ho_idx = ha_ho_idx
+	</update>
+	
+	<!-- 호텔 예약 건수 확인 -->
+	<select id="reservCnt" resultType="int">
+		SELECT COUNT(*) FROM orders
+		WHERE o_didx IN (SELECT d_idx FROM hotel_detail
+		WHERE d_ho_idx = #{ho_idx})
+		AND o_state IN (1, 3)
+	</select>
+</mapper>

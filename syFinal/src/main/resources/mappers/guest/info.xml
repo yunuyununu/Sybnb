@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="info">
+<select id="checkId" resultType="Int">
+	select IFNULL((SELECT count(*) from guest where g_email = #{g_email}), 0)
+</select>
+
+<insert id="join">
+	insert into guest (g_email, g_passwd, g_name, g_phone, g_level) values (#{g_email}, #{g_passwd}, #{g_name}, #{g_phone}, 1) 
+</insert>
+
+<select id="detail" resultType="com.example.syFinal.guest.model.dto.GuestDTO">
+	select * from guest,level where g_idx = #{g_idx} and g_level=l_level
+</select>
+
+<update id="update">
+	update guest 
+	set g_passwd = #{g_passwd}, g_phone = #{g_phone}, g_url=#{g_url}, g_profile=#{g_profile}, g_photo=#{g_photo}
+	where g_idx = #{g_idx}
+</update>
+
+<delete id="delete">
+	update guest set 
+	g_email = #{delete_id}, g_passwd = '-', g_name='-', g_phone='-', 
+	g_url='-', g_profile = '미인증', g_level = 0, g_photo = '-', g_point = 0  
+	where g_idx = #{g_idx}
+</delete>
+
+<delete id ="delete_message">
+	delete from message 
+	where m_sender = (select g_email from guest where g_idx = #{g_idx}) 
+	or m_receiver = (select g_email from guest where g_idx = #{g_idx}) 
+</delete>
+
+<select id="checkOrder" resultType="Int">
+select IFNULL((SELECT count(*) FROM orders where o_gidx = #{g_idx} AND (o_state = 1 OR o_state = 3)), 0)
+</select>
+
+</mapper>

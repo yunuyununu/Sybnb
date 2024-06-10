@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="notice">
+
+	<select id="list"
+		resultType="com.example.syFinal.admin.model.dto.ANoticeDTO">
+		select n_idx,n_writer,n_title,n_date,n_content
+		from
+		notice
+		where ${searchkey} like CONCAT('%',#{search},'%')
+	</select>
+
+	<insert id="insert">
+		insert into notice (n_writer, n_title, n_content, n_date)
+		values (#{n_writer}, #{n_title}, #{n_content}, #{n_date})
+	</insert>
+
+	<update id="update" parameterType="map">
+		update notice
+		set n_title	=#{n_title}, n_content=#{n_content},
+		n_date =#{n_date}
+		where n_idx = #{n_idx}
+	</update>
+
+	<select id="detail"
+		resultType="com.example.syFinal.admin.model.dto.ANoticeDTO">
+		select
+		n_writer,n_title,n_content,n_date
+		from
+		notice
+		where n_idx=#{n_idx}
+	</select>
+
+	<delete id="delete">
+		delete from notice where n_idx = #{n_idx}
+	</delete>
+
+</mapper>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="host">
+<!-- 회원가입 -->
+<insert id="insert">
+insert into host (h_email, h_passwd, h_name, h_phone, h_business, h_profile, h_file, h_description, h_accountnum, h_bankbook) 
+values (#{userEmail}, #{pwd}, #{h_name}, #{h_phone}, #{h_business}, #{h_profile}, #{h_file}, #{h_description}, #{h_accountnum}, #{h_bankbook})
+</insert>
+
+<!-- 비밀번호 확인 -->
+<select id="pwdCheck" resultType="String">
+select h_passwd from host where h_email=#{userEmail}
+</select>
+
+<!-- 아이디 중복검사 -->
+<select id="idCheck" resultType="int">
+select count(h_idx) from host where h_email=#{userEmail}
+</select>
+
+<!-- 로그인성공 시 쿠키로 저장할 host 데이터 -->
+<select id="makeCookie" resultType="com.example.syFinal.host.model.dto.HostDTO">
+select h_idx, h_email, h_name, h_level
+from host
+where h_email=#{userEmail}
+</select>
+
+<!-- host 회원정보 -->
+<select id="getAccount" resultType="java.util.Map">
+select 
+	h_idx, h_email, h_name, h_phone, h_business, 
+	h_level,
+	l_name,
+	h_status, h_regdate, h_profile, h_file, h_description, h_accountnum, h_bankbook
+from host h, level l
+where h_idx=#{h_idx} 
+	AND h.h_level=l.l_level;
+</select>
+
+<!-- Host계정 아이디 찾기 -->
+<select id="findId" resultType="String">
+select h_email from host
+where h_name=#{h_name} and h_phone=#{h_phone} and h_business=#{h_business}
+</select>
+
+<!-- Host계정 비밀번호 찾기 -->
+<select id="findPwd" resultType="int">
+select count(h_idx) from host
+where h_email=#{userEmail} and h_phone=#{h_phone} and h_business=#{h_business}
+</select>
+
+<update id="setTempPwd" parameterType="map">
+update host
+set h_passwd=#{pwd}
+where h_email=#{userEmail}
+</update>
+
+<!-- 회원정보 업데이트 -->
+<update id="update">
+update host
+<trim prefix="SET" suffixOverrides=",">
+	<if test="pwd != '' or pwd != null">h_passwd = #{pwd},</if>
+	<if test="h_name != '' or h_name != null">h_name = #{h_name},</if>
+	<if test="h_phone != '' or h_phone != null">h_phone = #{h_phone},</if>
+	<if test="h_profile != '' or h_profile != null">h_profile = #{h_profile},</if>
+	<if test="h_file != '' or h_file != null">h_file = #{h_file},</if>
+	<if test="h_description != '' or h_description != null">h_description = #{h_description},</if>
+	<if test="h_accountnum != '' or h_accountnum != null">h_accountnum = #{h_accountnum},</if>
+	<if test="h_bankbook != '' or h_bankbook != null">h_bankbook = #{h_bankbook}</if>
+</trim>
+where h_idx=#{h_idx}
+</update>
+
+<update id="delete">
+<!-- delete from host where h_idx=#{h_idx} -->
+update host
+set 
+	h_email=#{deletedEmail}, h_phone='-', h_business='-', h_accountnum='-',
+	h_profile='-', h_file='-', h_bankbook='-',
+	h_level=0, h_status='탈퇴'
+where h_idx=#{h_idx}	 
+</update>
+
+<!-- 첨부파일 확인 -->
+<select id="getFile" resultType="String">
+select ${type} from host where h_idx=#{h_idx}
+</select>
+
+<!-- 호스트 승인 신청 -->
+<update id="levelUp">
+update host set h_status="승인대기" where h_idx=#{h_idx}
+</update>
+
+<!-- 탈퇴 전 가능여부 사전 검증 -->
+<select id="checkOrders" resultType="int">
+select count(o_idx) from v_host_order
+where 
+	ho_idx in (select ho_idx from hotel where ho_h_idx = #{h_idx})
+	and (o_state=1 or o_state=3)
+</select>
+
+</mapper>

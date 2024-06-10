@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="order">
+<select id="getList" resultType="java.util.Map">
+select A.*
+from(
+	select @rownum:=@rownum+1 AS rownum, v.* 
+	from v_host_order v, (select @rownum:=0) tmp
+<choose>
+  <when test="sort==0">
+	<choose>
+		<when test="ho_idx == 0"> <!-- 최초접속 -->
+			where ho_idx = (select ho_idx from hotel where ho_h_idx=#{h_idx} LIMIT 1)
+		</when>
+		<otherwise> <!-- 전체조회 -->
+			where ho_idx = #{ho_idx}
+		</otherwise>
+	</choose>
+		and not exists (
+			select distinct ru_idx from reserv_update 
+			WHERE ru_idx=o_idx and ru_state=1
+		)
+		order by @rownum desc) A
+  </when>
+  <otherwise>
+  		where ho_idx = #{ho_idx}
+  		and not exists (
+			select distinct ru_idx from reserv_update 
+			WHERE ru_idx=o_idx and ru_state=1
+		)
+  		order by o_state desc, o_idx desc) A
+  	order by rownum desc	
+  </otherwise>		
+</choose>			
+	limit #{start}, 10
+</select>
+
+<select id="countRecord" resultType="int">
+	select count(*) from v_host_order
+<choose>
+	<when test="ho_idx == 0"> <!-- 최초접속 -->
+		where ho_idx = (select ho_idx from hotel where ho_h_idx=#{h_idx} LIMIT 1)
+	</when>
+	<when test="ho_idx == -1"> <!-- 호스트 계정 당 전체 목록 -->
+		where ho_idx in (select ho_idx from hotel where ho_h_idx=#{h_idx})
+	</when>
+	<otherwise> <!-- 호텔 선택조회 -->
+		where ho_idx = #{ho_idx}
+	</otherwise>
+</choose>
+</select>
+
+<select id="countAll" resultType="int">
+	select count(*) from v_host_order
+	where ho_idx IN (select ho_idx from hotel where ho_h_idx=#{h_idx})
+</select>
+
+<select id="getHotelList" resultType="java.util.Map">
+	select @rownum:=@rownum+1 AS rownum, ho_idx, ho_name 
+	from hotel, (select @rownum:=0) tmp
+	where ho_h_idx=#{h_idx} order by ho_idx
+</select>
+
+<select id="getGuestProfile" resultType="com.example.syFinal.guest.model.dto.GuestDTO">
+	select g_name, g_email, g_phone, g_photo 
+	from guest where g_idx=#{g_idx}
+</select>
+
+<select id="confirm" statementType="CALLABLE">
+{	call p_order_confirm(
+		#{opt, mode=IN, jdbcType=INTEGER}, 
+		#{oidx, mode=IN, jdbcType=INTEGER}, 
+		#{hidx, mode=IN, jdbcType=INTEGER}, 
+		#{level, mode=OUT, jdbcType=INTEGER}, 
+		#{result, mode=OUT, jdbcType=INTEGER}
+	)
+}
+</select>
+
+<update id="update">
+update orders
+set o_state='3' 
+where o_idx=#{o_idx}
+</update>
+
+<select id="levelUp" statementType="CALLABLE">
+{	call level_up(#{idx}) }
+</select>
+
+<select id="levelDown" statementType="CALLABLE">
+{	call level_down(#{idx}) }
+</select>
+
+<!-- 체크인, 체크아웃 날짜 배열(달력 마크) -->
+<select id="schedule" resultType="java.util.Map">
+select distinct ${column}, o_state
+	from v_host_order v
+	where 
+		ho_idx in (select ho_idx from hotel where ho_h_idx=#{h_idx})
+		<choose>
+		  <when test="pending == 1">
+			and o_state = '1'
+		  </when>
+		  <otherwise>
+			and (o_state ='3' or o_state = '4')
+		  </otherwise>	
+		</choose>
+	order by ${column}
+</select>
+
+<!-- 예약수정 요청 목록 -->
+<select id="modifyRequest" resultType="java.util.Map">
+	select distinct v.* 
+	from v_modify_order v
+	where v.ho_idx 
+		IN (select ho_idx from hotel where ho_h_idx=#{h_idx})
+</select>
+
+<!-- 게스트의 예약변경 요청사항을 orders 테이블에 반영 -->
+<select id="modify" statementType="CALLABLE">
+{	call p_order_modify(
+		#{oidx, mode=IN, jdbcType=INTEGER}, 
+		#{ckin, mode=IN, jdbcType=VARCHAR}, 
+		#{ckout, mode=IN, jdbcType=VARCHAR}, 
+		#{adult, mode=IN, jdbcType=INTEGER}, 
+		#{child, mode=IN, jdbcType=INTEGER}, 
+		#{baby, mode=IN, jdbcType=INTEGER}, 
+		#{hidx, mode=IN, jdbcType=INTEGER}, 
+		#{level, mode=OUT, jdbcType=INTEGER}, 
+		#{result, mode=OUT, jdbcType=INTEGER}
+	)
+}
+</select>
+
+<!-- 기존 예약 수 확인 -->
+<select id="countOrders" resultType="int">
+select count(*)
+from (
+	select distinct o_idx, o_didx, d_room_type
+	from orders, hotel_detail
+	where 
+		((o_ckin <![CDATA[<]]> #{ckin} and o_ckout <![CDATA[>]]> #{ckin}) 
+		or (o_ckin <![CDATA[>=]]> #{ckin} and o_ckin <![CDATA[<]]> #{ckout}))
+		and d_room_type = #{d_room_type}
+		and o_didx = #{d_idx}
+		and o_state != '2'
+) tmp
+</select>
+
+<select id="roomCount" resultType="int">
+select
+<choose>
+	<when test="d_room_type == '싱글룸' ">ho_single</when>
+	<when test="d_room_type == '더블룸' ">ho_double</when>
+	<when test="d_room_type == '패밀리룸' ">ho_family</when>
+	<otherwise>ho_suite</otherwise>
+</choose>
+	from hotel
+	where ho_idx = #{ho_idx}
+</select>
+
+<update id="requestReject">
+update reserv_update
+set ru_state=0 
+where ru_idx=#{o_idx}
+</update>
+
+<select id="voucher" resultType="java.util.Map">
+select v.*, g_email, g_name, h_phone, ho_address  
+from v_host_order v, guest g, host h, hotel ho 
+where 
+	v.o_idx=#{o_idx}
+	and g.g_idx=v.g_idx
+	and ho.ho_idx=v.ho_idx
+	and h.h_idx=ho.ho_h_idx
+</select>
+
+<select id="detailSchedule" resultType="java.util.Map">
+select @rownum:=@rownum+1 AS rownum, A.*
+from
+	(select v.*, g_email, g_name, g_phone
+	from v_host_order v, guest g
+	where 
+		v.ho_idx in (select ho_idx from hotel where ho_h_idx=#{h_idx})
+		and ${column}=#{date}
+		and v.g_idx=g.g_idx
+	<choose>
+		<when test="column == 'o_ckin'">
+		and o_state !='2'
+		order by o_state desc, o_idx	
+		</when>
+		<otherwise>
+		and (o_state='3' or o_state='4')
+		order by o_idx
+		</otherwise>
+	</choose>
+	) A, (select @rownum:=0) tmp
+</select>
+
+<select id="cntPendings" resultType="int">
+select count(*)
+from v_host_order
+where o_state='1'
+	  and ho_idx in (select ho_idx from hotel where ho_h_idx = #{h_idx})
+</select>
+</mapper>

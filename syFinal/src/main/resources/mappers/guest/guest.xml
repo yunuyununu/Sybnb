@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="guest">
+	
+	<!-- 게스트정보 -->
+	<select id="myguest" resultType="com.example.syFinal.guest.model.dto.GuestDTO">
+		select 
+		g_idx,
+		g_email,
+		g_name,
+		g_photo,
+		g_phone,
+		g_url,
+		g_profile,
+		g_level,
+		g_point
+		from guest
+		where g_idx=#{g_idx}
+	</select>
+	
+	<!-- 결제리스트 -->
+	<select id="paylist" resultType="com.example.syFinal.guest.model.dto.GuestDTO">
+		SELECT
+		ho_idx,
+		d_idx,
+		g_idx,
+		o_idx,
+		d_img1, 
+		o_state, 
+		DATE_FORMAT(o_orderdate, '%Y년 %m월 %d일') as o_orderdate, 
+		o_payment, 
+		DATE_FORMAT(o_ckin, '%Y/%m/%d') as o_ckin, 
+		DATE_FORMAT(o_ckout, '%Y/%m/%d') as o_ckout, 
+		o_finalprice,
+		DATE_FORMAT(o_refunddate, '%Y년 %m월 %d일') as o_refunddate 
+		FROM hotel_detail d, orders o, guest g, hotel h
+		WHERE d.d_idx = o.o_didx AND g.g_idx = o_gidx AND d.d_ho_idx = h.ho_idx
+		and g_idx=#{g_idx}
+		order BY o_orderdate desc
+	</select>
+	
+	<!-- 게스트 보유쿠폰리스트 -->
+	<select id="couponlist" resultType="com.example.syFinal.guest.model.dto.CouponDTO">
+		SELECT c_num,c_name,c_div,c_benefit,gc_idx,gc_gidx,gc_check,gc_issue,gc_deadline
+		FROM coupon c,g_coupon gc 
+		WHERE c.c_num=gc.gc_num and gc_check = 0 AND gc_gidx=#{g_idx}
+	</select>
+	
+	<!-- 게스트 보유쿠폰갯수 -->
+	<select id='c_count' resultType='int'>
+		SELECT COUNT(gc_idx) AS c_count FROM coupon c,g_coupon gc WHERE c.c_num=gc.gc_num and gc_check=0 AND gc_gidx=#{g_idx}
+	</select>
+	
+	<!-- 예약시 호텔정보 -->
+	<select id="hotelinfo" resultType="com.example.syFinal.host.model.dto.HotelDTO">
+		SELECT d_idx,ho_img,ho_name,d_price
+		FROM hotel h, hotel_detail d
+		WHERE h.ho_idx = d.d_ho_idx
+		AND d_idx = #{d_idx}
+	</select>
+	
+	<!-- 예약요청 -->
+	<insert id="order">
+		INSERT INTO orders 
+		(o_gidx,o_didx,o_ckin,o_ckout,o_adult,o_child,o_baby,o_payment,o_discount,o_price,o_finalprice,o_benefit,o_orderdate,paymentId)
+		VALUES 
+		(#{idx},#{didx},#{ckin},#{ckout},#{adult},#{child},#{baby},#{pay},#{usePoint},#{dprice},#{fprice},#{useCoupon},now(),#{paymentId})
+	</insert>
+	<!-- 주문시 게스트남은포인트 수정 -->
+	<update id='pointupdate'>
+		update guest
+		set g_point = #{rePoint}
+		where g_idx = #{idx}
+	</update>
+	<!-- 주문시 게스트쿠폰테이블 수정 -->
+	<update id='couponupdate'>
+		update g_coupon
+		set gc_check = 1
+		where gc_idx = #{gcidx}
+	</update>
+	
+	<!-- 게스트리뷰리스트 -->
+	<select id="reviewlist" resultType="com.example.syFinal.guest.model.dto.ReviewDTO">
+		SELECT 
+		g_idx, 
+		h_idx,
+		d_idx,
+		ho_idx,
+		rv_idx,
+		ho_name,
+		d_img1,
+		h_profile, 
+		h_name, 
+		DATE_FORMAT(rv_date, '%Y년 %m월 %d일') as rv_date,
+		rv_content
+		FROM guest g, host h, review rv, hotel_detail hd, hotel ho
+		WHERE g.g_email = rv.rv_writer AND rv.rv_hd_idx = hd.d_idx AND hd.d_ho_idx = ho.ho_idx AND ho.ho_h_idx = h.h_idx
+		AND g_idx=#{gidx}
+		AND rv_deleted=0
+		order by rv_date desc
+	</select>
+	
+	<!-- 게스트답변리스트 -->
+	<select id="replylist" resultType="com.example.syFinal.guest.model.dto.ReviewDTO">
+		SELECT 
+		g_idx, 
+		h_idx, 
+		h_profile, 
+		h_name, 
+		DATE_FORMAT(rp_date, '%Y년 %m월 %d일') as rp_date,
+		rp_content
+		FROM guest g, host h, reply rp, review rv, hotel_detail hd, hotel ho
+		WHERE g.g_email = rv.rv_writer AND rp.rp_rv_idx = rv.rv_idx AND rv.rv_hd_idx = hd.d_idx AND hd.d_ho_idx = ho.ho_idx AND ho.ho_h_idx = h.h_idx
+		AND g_idx=#{gidx} AND rp_deleted = 0
+		order by rp_date desc
+	</select>
+	
+	<!-- 리뷰갯수 -->
+	<select id="reviewcount" resultType="com.example.syFinal.guest.model.dto.ReviewDTO">
+		SELECT COUNT(*) as reviewcount
+		FROM review
+		WHERE rv_writer=(SELECT g_email from guest where g_idx=#{gidx}) AND rv_deleted = 0
+	</select>
+	
+	<!-- 가입기간 -->
+	<select id="joindate" resultType="com.example.syFinal.guest.model.dto.GuestDTO">
+		SELECT (TO_DAYS(now()) - TO_DAYS(g_join_date)) AS joindate
+		FROM guest
+		WHERE g_idx=#{gidx}
+	</select>
+	
+	<!-- 영수증 상세내역 -->
+	<select id="receipt" resultType="java.util.HashMap">
+		SELECT 
+		ho_idx,
+		d_idx,
+		g_idx,
+		o_idx,
+		o_ckin,
+		o_ckout,
+		o_adult,
+		o_child,
+		o_baby,
+		o_price,
+		o_discount,
+		o_benefit,
+		o_finalprice,
+		o_payment,
+		o_orderdate,
+		ifnull(o_refunddate,0) as o_refunddate,
+		paymentId,
+		ho_name,
+		ho_img,
+		d_room_type,
+		d_beds,
+		h_name,
+		g_name
+		FROM hotel ho, hotel_detail d, host h, guest g, orders o
+		WHERE o.o_didx = d.d_idx AND o.o_gidx = g.g_idx AND d.d_ho_idx = ho.ho_idx AND ho.ho_h_idx = h.h_idx
+		AND g_idx = #{gidx} AND d_idx = #{didx} AND ho_idx=#{hoidx} AND o_idx=#{oidx}
+	</select>
+</mapper>

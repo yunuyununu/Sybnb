@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="reply">
+<insert id="insertReply">
+insert into reply (rp_rv_idx, rp_writer, rp_content)
+values (#{rp_rv_idx}, #{rp_writer}, #{rp_content})
+</insert>
+
+<update id="editReply">
+update reply
+set rp_content=#{rp_content}
+where rp_idx=#{rp_idx}
+</update>
+
+<delete id="delete">
+delete from reply where rp_idx=#{rp_idx}
+</delete>
+
+<select id="searchReviews" resultType="java.util.Map">
+select @rownum:=@rownum+1 as rownum, v.* 
+from v_hotel_review v, (select @rownum:=0) tmp
+where h_idx=#{h_idx} and
+  <choose>
+	<when test="sort == 'ho_name'">
+		ho_name like concat('%', #{keyword}, '%')	
+	</when>
+  	<when test="sort == 'o_idx'">
+		o_idx like concat('%', #{keyword}, '%')
+	</when>	
+	<when test="sort == 'reply'">
+  	  <choose>
+  	  	<when test="keyword == '미등록'">
+			rp_idx = 0
+		</when>
+		<otherwise>
+			rp_idx != 0
+		</otherwise>
+	  </choose>
+	</when>	
+	<otherwise>
+	  <choose>
+  	  	<when test="keyword == '미등록'">
+			rp_idx = 0
+		</when>
+		<when test="keyword == '등록완료'">
+			rp_idx != 0
+		</when>
+		<otherwise>
+			(ho_name like concat('%', #{keyword}, '%')
+			or o_idx like concat('%', #{keyword}, '%'))
+		</otherwise>
+	  </choose>
+	</otherwise>
+  </choose>
+order by rv_idx desc, @rownum desc
+limit #{start}, 10
+</select>
+
+<select id="count" resultType="int">
+select count(*) from v_hotel_review 
+where h_idx=#{h_idx} and
+  <choose>
+	<when test="sort == 'ho_name'">
+		ho_name like concat('%', #{keyword}, '%')	
+	</when>
+  	<when test="sort == 'o_idx'">
+		o_idx like concat('%', #{keyword}, '%')
+	</when>	
+	<when test="sort == 'reply'">
+  	  <choose>
+  	  	<when test="keyword == '미등록'">
+			rp_idx = 0
+		</when>
+		<otherwise>
+			rp_idx != 0
+		</otherwise>
+	  </choose>
+	</when>	
+	<otherwise>
+	  <choose>
+  	  	<when test="keyword == '미등록'">
+			rp_idx = 0
+		</when>
+		<when test="keyword == '등록완료'">
+			rp_idx != 0
+		</when>
+		<otherwise>
+			(ho_name like concat('%', #{keyword}, '%')
+			or o_idx like concat('%', #{keyword}, '%'))
+		</otherwise>
+	  </choose>
+	</otherwise>
+  </choose>
+</select>
+
+</mapper>
