@@ -106,7 +106,6 @@ __[사용기술 및 개발환경]__
 🔗 [숙박예약/결제 시연영상 보기](https://github.com/mindyhere/final-project/assets/147589193/cbf80039-e428-42be-ae34-cf464309f211)
 
 
-- 포트원API 및 카카오페이 결제API 적용
 
 ![결제화면1](https://github.com/user-attachments/assets/25d5220e-161d-485c-8611-5be87903ac54)
 - 예약하기
