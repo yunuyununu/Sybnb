@@ -21,8 +21,6 @@
 <br/>
 🔗 [프레젠테이션 자료](https://docs.google.com/presentation/d/17xhSXil2K-h7-_tIEPv6zsKwHZvXYaMbxjTMpMjHYV8/edit?usp=sharing)
 <br/>
-<br/>
-<br/>
 
 * * *
 
@@ -61,8 +59,6 @@ __[사용기술 및 개발환경]__
 - Front-end  :  HTML/CSS, React, Javascript
 - Back-end  :  Java(JDK21),Spring Framework, MariaDB 11.3
 - Library  :  Lombok 1.18.30, MyBatis 3.5.15, Bootstrap 5.3, Sweetalert2, Chart.js 4.4.0, etc.
-<br/>
-<br/>
 <br/>
 
 * * *
@@ -126,6 +122,7 @@ __[사용기술 및 개발환경]__
   - 결제성공 시 알림창 뜨고 예약확인페이지로 이동
     - 포트원 결제내역에 데이터 입력됨
     - 결제내역 이메일/카톡으로 전송됨
+
 
 
 ![ex2](https://github.com/mindyhere/final-project/assets/147589193/4c2f9745-e179-4940-8ad4-893273566ea0)
