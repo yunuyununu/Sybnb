@@ -101,8 +101,33 @@ __[사용기술 및 개발환경]__
 
 #### __📇 숙박예약 및 예약관리__
 ![reservation](https://github.com/mindyhere/final-project/assets/147589193/5b56dafe-191c-49da-a502-8b3c7d65761d "flow3")
+
+
 🔗 [숙박예약/결제 시연영상 보기](https://github.com/mindyhere/final-project/assets/147589193/cbf80039-e428-42be-ae34-cf464309f211)
+
+
 - 포트원API 및 카카오페이 결제API 적용
+
+![결제화면1](https://github.com/user-attachments/assets/25d5220e-161d-485c-8611-5be87903ac54)
+- 예약하기
+  - 원하는 객실 클릭(가격변동)
+  - 게스트로 로그인x / 숙박날짜 미입력 시 alert
+  - 달력에서 날짜선택, 인원선택 -> 총 합계정보 확인 후 예약하기 버튼 클릭하면 예약요청페이지로 넘어감
+  - 해당객실 만실일 때 날짜 비활성화
+- 예약요청
+  - 호텔/객실정보, 주문자 정보, 선택한 예약정보 띄워짐
+  - 쿠폰/포인트 : 사용금액 입력 후 버튼 클릭 시 요금세부정보에 계산되어 적용됨
+  - 결제수단 선택 후 하단버튼 클릭 시 결제화면창 활성화
+
+
+![결제화면](https://github.com/user-attachments/assets/42fbe15a-fea0-44dd-8bf9-6c846533b4ba)
+- 숙박 예약(결제)
+  - 포트원API 사용(나이스페이먼츠, 카카오페이)
+  - 선택한 결제수단 바코드로 결제
+  - 결제성공 시 알림창 뜨고 예약확인페이지로 이동
+    - 포트원 결제내역에 데이터 입력됨
+    - 결제내역 이메일/카톡으로 전송됨
+
 
 ![ex2](https://github.com/mindyhere/final-project/assets/147589193/4c2f9745-e179-4940-8ad4-893273566ea0)
 ![ex5](https://github.com/mindyhere/final-project/assets/147589193/8c010fce-1a43-4707-88cd-41238e620c53)
